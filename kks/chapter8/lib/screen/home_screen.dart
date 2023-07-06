@@ -20,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     Timer.periodic(
       // ➍ Timer.periodic() 등록
-      const Duration(seconds: 3),
+      const Duration(seconds: 5),
           (timer) {
         print('실행!');
         int? nextPage = pageController.page?.toInt();
@@ -30,7 +30,7 @@ class _HomeScreenState extends State<HomeScreen> {
           return;
         }
         // ➌
-        if (nextPage == 4) { // 마지막 페이지인 상황에서 넘겼을 때 첫번째 페이지로 넘어감
+        if (nextPage == 4) { // 마지막 페이지인 상황에서 5초가 지나 넘어갔을 때 첫번째 페이지로 넘어감
           nextPage = 0;
         } else {
           nextPage++;
@@ -47,7 +47,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+    // 상태바 색 변경
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.dark);
 
     return Scaffold(
       body: PageView(
