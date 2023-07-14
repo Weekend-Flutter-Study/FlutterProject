@@ -12,37 +12,47 @@ class HomeScreen extends StatefulWidget {
 
 // ❷ State 정의
 class _HomeScreenState extends State<HomeScreen> {
-  final PageController pageController = PageController();
+  Timer? timer;
+  PageController controller = PageController(
+    initialPage: 0,
+  );
 
   @override
   void initState() {
     super.initState(); // ➌ 부모 initState() 실행
 
-    Timer.periodic(
+    timer = Timer.periodic(
       // ➍ Timer.periodic() 등록
-      const Duration(seconds: 5),
+      const Duration(seconds: 4),
           (timer) {
-        print('실행!');
-        int? nextPage = pageController.page?.toInt();
+        int currentPage = controller.page!.toInt();
+        int nextPage = currentPage + 1;
 
-        // ➋
-        if (nextPage == null) {
-          return;
-        }
         // ➌
-        if (nextPage == 4) { // 마지막 페이지인 상황에서 5초가 지나 넘어갔을 때 첫번째 페이지로 넘어감
+        if (nextPage > 4) { // 마지막 페이지인 상황에서 5초가 지나 넘어갔을 때 첫번째 페이지로 넘어감
           nextPage = 0;
-        } else {
-          nextPage++;
         }
-        pageController.animateToPage(
+
+        controller.animateToPage(
           // ➍ 페이지 변경
           nextPage,
-          duration: Duration(milliseconds: 500),
-          curve: Curves.ease,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.linear,
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose(); // controller 해제
+
+    if (timer != null) {
+      timer!.cancel(); // timer 해제
+    }
+    // super.dispose() 후에는 위젯이 사라지기 때문에
+    // super.dispose() 위에 작업해준다.
+    super.dispose();
   }
 
   @override
@@ -52,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       body: PageView(
-        controller: pageController,
+        controller: controller,
         // ➊ PageView 추가
         children: [1, 2, 3, 4, 5] // ➋ 샘플 리스트 생성
             .map(
