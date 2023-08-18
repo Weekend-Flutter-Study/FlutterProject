@@ -2,28 +2,32 @@ import 'package:calendar_scheduler/const/colors.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-class Calendar extends StatefulWidget {
-  const Calendar({Key? key}) : super(key: key);
+class Calendar extends StatelessWidget {
+  // 외부에서 관리하게 할 변수들
+  final DateTime? selectedDay;  // 처음에 선택이 안되어있게 해도 되고, DateTime.now() 넣어서 지정해도 됨
+  final DateTime focusedDay;
+  final OnDaySelected onDaySelected;
 
-  @override
-  State<Calendar> createState() => _CalendarState();
-}
-
-class _CalendarState extends State<Calendar> {
-  DateTime? selectedDay; // 처음에 선택이 안되어있게 해도 되고, DateTime.now() 넣어서 지정해도 됨
-  final defaultBoxDeco = BoxDecoration(
-    borderRadius: BorderRadius.circular(6.0),
-    color: Colors.grey[200], // 주말을 제외한 평일날의 색상을 표시
-  );
-  final defaultTextStyle = TextStyle(
-    color: Colors.grey[600],
-    fontWeight: FontWeight.w700,
-  );
+  const Calendar({
+    required this.selectedDay,
+    required this.focusedDay,
+    required this.onDaySelected,
+    Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final defaultBoxDeco = BoxDecoration(
+      borderRadius: BorderRadius.circular(6.0),
+      color: Colors.grey[200], // 주말을 제외한 평일날의 색상을 표시
+    );
+    final defaultTextStyle = TextStyle(
+      color: Colors.grey[600],
+      fontWeight: FontWeight.w700,
+    );
+
     return TableCalendar(
-      focusedDay: DateTime.now(),
+      locale: 'ko_KR',
+      focusedDay: focusedDay,
       firstDay: DateTime(1800),
       lastDay: DateTime(3000),
       headerStyle: HeaderStyle(
@@ -48,16 +52,14 @@ class _CalendarState extends State<Calendar> {
             width: 1.0,
           ),
         ),
+        outsideDecoration: BoxDecoration(
+          shape: BoxShape.rectangle,
+        ),
         defaultTextStyle: defaultTextStyle,
         weekendTextStyle: defaultTextStyle,
         selectedTextStyle: defaultTextStyle.copyWith(color: PRIMARY_COLOR),
       ),
-      onDaySelected: (DateTime selectedDay, DateTime focusedDay) {
-        setState(() {
-          print(selectedDay);
-          this.selectedDay = selectedDay;
-        });
-      },
+      onDaySelected: onDaySelected,
       selectedDayPredicate: (DateTime date) {
         if (selectedDay == null) {
           return false;
