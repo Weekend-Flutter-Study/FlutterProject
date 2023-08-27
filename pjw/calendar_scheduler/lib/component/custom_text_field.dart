@@ -28,7 +28,15 @@ class CustomTextField extends StatelessWidget {
   }
 
   Widget renderTextField() {
-    return TextField(
+    return TextFormField(
+      /* TextFormField = TextField + 추가 기능 */
+      /* validator : null return = NO ERROR */
+      validator: (String? val) {
+        if (val == null || val.isEmpty) {
+          return '값을 입력해주세요';
+        }
+        return null;
+      },
       cursorColor: Colors.grey,
       expands: !isTime, /* 최대로 늘릴꺼냐? */
       keyboardType: isTime ? TextInputType.number : TextInputType.multiline,
