@@ -28,6 +28,25 @@ class LocalDatabase extends _$LocalDatabase{
   // LocalDatabase를 _$ 한 뒤 extends 한다
   // _$LocalDatabase 클래스는 drift가 만들어 주고, 이 클래스가 있는 파일은 drift_database.g.dart가 된다.
   LocalDatabase() : super(_openConnection());
+
+  //INSERT
+  // SchedulesCompanion 안에다가 넣어줘야 정확히 insert 된
+  // drift가 sql을 전환을 하는 방식
+  // Future<int> 를 통해 primary key를 돌려 받을 수 있다.
+  Future<int> createSchedule(SchedulesCompanion data) =>
+      //schedules table에다가 값을 넣을거다
+      into(schedules).insert(data);
+
+  //색상 inseert
+  Future<int> createCategoryColor(CategoryColorsCompanion data) =>
+      into(categoryColors).insert(data);
+
+  //categoryColor를 가져오는 기능
+  Future<List<CategoryColor>> getCategoryColors() =>
+      select(categoryColors).get();
+
+  @override
+  int get schemaVersion => 1; // data 베이스에 설정한 테이블들의 상태의 버전 // 데이터 베이스 구조 즉 테이블구조가 바뀔때 버전이 올라감
 }
 
 // 연결
