@@ -1,6 +1,19 @@
+import 'package:calendar_scheduler/database/drift_database.dart';
 import 'package:calendar_scheduler/screen/home_screen.dart';
+import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:calendar_scheduler/database/drift_database.dart';
+
+const DEFAULT_COLORS = [
+  'F44336',
+  'FF9800',
+  'FCAF50',
+  'FCAF50',
+  '2196F3',
+  '3F51B5',
+  '9C27B0',
+];
 
 
 void main() async {
@@ -8,6 +21,21 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initializeDateFormatting(); //intl package에 있는 모든 언어를 사용 할 수 있게 됨.
+
+  final database = LocalDatabase();
+
+  /* 색이 들어가있나 확인하기 */
+  final colors = await database.getCategoryColors();
+  if (colors.isEmpty) {
+    for(String hexcode in DEFAULT_COLORS) {
+      await database.createCategoryColor(
+        CategoryColorsCompanion(
+          /* id = autoInc : 굳이 넣을 필요 없다! */
+          hexCode: Value(hexcode) /* 값을 넣을때 꼭 Value 써야함 */
+        )
+      );
+    }
+  }
 
   runApp(
       MaterialApp(
