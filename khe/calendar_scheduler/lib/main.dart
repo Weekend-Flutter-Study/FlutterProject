@@ -2,6 +2,7 @@ import 'package:calendar_scheduler/database/drift_database.dart';
 import 'package:calendar_scheduler/screen/home_screen.dart';
 import 'package:drift/drift.dart';
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 const DEFAULT_COLORS = [
@@ -29,6 +30,10 @@ void main() async {
 
   //database 불러오기
   final database = LocalDatabase();
+
+   // dependency ingection : 넣어주고, 원하는 곳에서 주입하여 사용 (파라미터가 아닌, 한번 넣고 여러곳에서 사용)
+  //getit 을 통해 그 어디에서든 database라는 값을 가져 올 수 있음 파라미터로 넘기지 않더라도
+  GetIt.I.registerSingleton<LocalDatabase>(database);
 
   //중복체크를 위해 색상을 가져와서, 비어있으면 for문으로 넣어주기
   final colors = await database.getCategoryColors();

@@ -1,11 +1,21 @@
 import 'package:calendar_scheduler/component/custom_text_field.dart';
+import 'package:calendar_scheduler/database/drift_database.dart';
+import 'package:calendar_scheduler/model/category_color.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:calendar_scheduler/database/drift_database.dart';
 
 import '../const/colors.dart';
 
 class ScheduleBottomSheet extends StatefulWidget {
   // text의 상태 관리를 위해 stateless -> stateful로 변경
-  const ScheduleBottomSheet({Key? key}) : super(key: key);
+  final DateTime selectedDate;
+
+  const ScheduleBottomSheet({
+    required this.selectedDate,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<ScheduleBottomSheet> createState() => _ScheduleBottomSheetState();
@@ -18,13 +28,14 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
   int? endTime;
   String? content;
 
+  //data 관리 id
+  int? selectedColorId;
+
   @override
   Widget build(BuildContext context) {
     //viewInsets : 시스템으로 가려진 부분 가져 올 수 있음
-    final bottomInset = MediaQuery
-        .of(context)
-        .viewInsets
-        .bottom; // 키보드가 차지하는 부분이 몇 픽셀인지 알 수 있음
+    final bottomInset =
+        MediaQuery.of(context).viewInsets.bottom; // 키보드가 차지하는 부분이 몇 픽셀인지 알 수 있음
 
     return GestureDetector(
       onTap: () {
@@ -34,10 +45,7 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
       child: SafeArea(
         child: Container(
           color: Colors.white,
-          height: MediaQuery
-              .of(context)
-              .size
-              .height / 2 + bottomInset,
+          height: MediaQuery.of(context).size.height / 2 + bottomInset,
           child: Padding(
             padding: EdgeInsets.only(bottom: bottomInset),
             child: Padding(
@@ -51,29 +59,50 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
               child: Form(
                 // key : Form의 일종의 컨트롤러
                 key: formKey,
-                autovalidateMode: AutovalidateMode.always,
+                // autovalidateMode: AutovalidateMode.always,
                 // 저장 키를 누르지 않아도, 입력할때마다 검증가능
-                child: Column(
+                child: Column(// material package에서 불러오는 Column
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _Time(
-                      onStartSaved: (String? val){
+                      onStartSaved: (String? val) {
                         // 값을 저장하여 어딘가에서 반복적 사용하길 원함
                         startTime = int.parse(val!);
                       },
-                      onEndSaved: (String? val){
+                      onEndSaved: (String? val) {
                         // validate 에서 null 이면 에러 메세지 던지라고 했기 때문에 ! 해도 괜찮다.
                         endTime = int.parse(val!);
                       },
                     ),
                     SizedBox(height: 16.0),
                     _Content(
-                      onSaved: (String? val){
+                      onSaved: (String? val) {
                         content = val;
                       },
                     ),
                     SizedBox(height: 16.0),
-                    _ColorPicker(),
+                    FutureBuilder<List<CategoryColor>>(
+                        future: GetIt.I<LocalDatabase>().getCategoryColors(),
+                        builder: (context, snapshot) {
+                          // print(snapshot.data);
+                          if (snapshot.hasData &&
+                              selectedColorId == null &&
+                              snapshot.data!.isNotEmpty) {
+                            // 자동으로 빨간색 선택
+                            selectedColorId = snapshot.data![0].id;
+                          }
+                          return _ColorPicker(
+                            colors: snapshot.hasData ? snapshot.data! : [],
+                            seletedColorId: selectedColorId,
+                            // 언제 널이 될수있는지? 데이터가 없을때 즉 로딩때
+                            colorIdSetter: (int id) {
+                              setState(() {
+                                // 색상을 누를때마다 보더가 바뀌면서 선택됨을 알 수 있음
+                                selectedColorId = id;
+                              });
+                            },
+                          );
+                        }),
                     SizedBox(height: 8.0),
                     _SaveButton(
                       onPressed: onSavePressed,
@@ -88,7 +117,7 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
     );
   }
 
-  void onSavePressed() {
+  void onSavePressed() async {
     // formKey는 생성을 했는데, Form 위젯과 결합을 안했을 때
     if (formKey.currentState == null) {
       return;
@@ -98,13 +127,28 @@ class _ScheduleBottomSheetState extends State<ScheduleBottomSheet> {
     if (formKey.currentState!.validate()) {
       // String을 return 하면 에러메세지로 간주하기 때문에 우리를 이를 활용하여 에러메세지로 보여줄 수 있음
       // null을 리턴하면 에러가 없다. 모든 텍스트 필드가 null 을 리턴하면 true 뭐라도 있으면 false
-      print('에러가 없습니다.');
+      // print('에러가 없습니다.');
+
       // 에러가 없으면 저장
       formKey.currentState!.save();
-      print('------------------');
-      print('startTime : $startTime');
-      print('endTime : $endTime');
-      print('content : $content');
+      // print('------------------');
+      // print('startTime : $startTime');
+      // print('endTime : $endTime');
+      // print('content : $content');
+
+      // save를 성공적으로 마쳤을때 스케줄 생성
+      final key = await GetIt.I<LocalDatabase>().createSchedule(
+        SchedulesCompanion(
+          date: Value(widget.selectedDate),
+          startTime: Value(startTime!),
+          endTime: Value(endTime!),
+          content: Value(content!),
+          colorId: Value(selectedColorId!),
+        ),
+      );
+
+      Navigator.of(context).pop();
+      // print('SAVE 완료 $key');
     } else {
       print('에러가 있습니다.');
     }
@@ -118,7 +162,8 @@ class _Time extends StatelessWidget {
   const _Time({
     required this.onStartSaved,
     required this.onEndSaved,
-    Key? key,}) : super(key: key);
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -151,7 +196,8 @@ class _Content extends StatelessWidget {
 
   const _Content({
     required this.onSaved,
-    Key? key,}) : super(key: key);
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -165,8 +211,19 @@ class _Content extends StatelessWidget {
   }
 }
 
+typedef ColorIdSetter = void Function(int id);
+
 class _ColorPicker extends StatelessWidget {
-  const _ColorPicker({Key? key}) : super(key: key);
+  final List<CategoryColor> colors;
+  final int? seletedColorId;
+  final ColorIdSetter colorIdSetter;
+
+  const _ColorPicker({
+    required this.colors,
+    required this.seletedColorId,
+    required this.colorIdSetter,
+    Key? key,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -174,22 +231,35 @@ class _ColorPicker extends StatelessWidget {
       // row로 하면 넘어가면 오류 -> 알아서 화면 넘어가면 내림 -> wrap
       spacing: 8.0,
       runSpacing: 10.0,
-      children: [
-        renderColor(Colors.red),
-        renderColor(Colors.orange),
-        renderColor(Colors.yellow),
-        renderColor(Colors.green),
-        renderColor(Colors.blue),
-        renderColor(Colors.purple),
-      ],
+      children: colors
+          .map((e) => GestureDetector(
+                onTap: () {
+                  // 어떤 id의 색깔을 눌렀는지 상위 위젯에 알려줘야 함 -> typedef 선언
+                  colorIdSetter(e.id); // 각각의 색상을 누를때 외부에서 받은 colorIdSetter를 사용,
+                  // 실행할때 파라미터에 어떤색깔이 선택됐는지 각각 색깔의 id를 전달해줌
+                },
+                child: renderColor(
+                  e,
+                  seletedColorId == e.id, // 선택된 상태
+                ),
+              ))
+          .toList(),
     );
   }
 
-  Widget renderColor(Color color) {
+  Widget renderColor(CategoryColor color, bool isSelected) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: color,
+        // map 을 통해 각각의 값을 받을 수 있음
+        // int.parse를 하면 10진수, radix 16하면 16진수
+        color: Color(
+          int.parse(
+            'FF${color.hexCode}',
+            radix: 16,
+          ),
+        ),
+        border: isSelected ? Border.all(color: Colors.black, width: 4.0) : null,
       ),
       width: 32.0,
       height: 32.0,
@@ -200,9 +270,7 @@ class _ColorPicker extends StatelessWidget {
 class _SaveButton extends StatelessWidget {
   final VoidCallback onPressed;
 
-  const _SaveButton({
-    required this.onPressed,
-    Key? key}) : super(key: key);
+  const _SaveButton({required this.onPressed, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
