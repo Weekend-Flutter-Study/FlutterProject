@@ -45,6 +45,26 @@ class LocalDatabase extends _$LocalDatabase{
   Future<List<CategoryColor>> getCategoryColors() =>
       select(categoryColors).get();
 
+  // 스케줄 추가 후 달력 리스트에 추가한 내용이 업데이트 되도록
+  // Stream<List<Schedule>> watchSchedules()=>
+  //     select(schedules).watch(); // watch: future대신 stream, get: 단발성 future 한번
+  // 메모리 절약을 위해 아래와같이 바꾼다.
+  Stream<List<Schedule>> watchSchedules(DateTime date){
+    // final query = select(schedules);
+    // query.where((tbl) => tbl.date.equals(date));
+    // return query.watch();
+
+    int number =3;
+    // '3' -> String
+    // : toString 실행해서 가져 올 수 있는 값이 리턴
+    final resp = number.toString();
+    // 3 -> int
+    // : toString 실행이 된 그 대상이 리턴 됨
+    final resp2 = number..toString();
+
+    return (select(schedules)..where((tbl) => tbl.date.equals(date))).watch();
+  }
+
   @override
   int get schemaVersion => 1; // data 베이스에 설정한 테이블들의 상태의 버전 // 데이터 베이스 구조 즉 테이블구조가 바뀔때 버전이 올라감
 }

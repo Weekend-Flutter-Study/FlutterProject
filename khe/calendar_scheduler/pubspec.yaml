@@ -41,6 +41,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.0 # SQLite 플러그인
   path_provider: ^2.0.0 # 경로 관련 기능을 제공하는 플러그인
   path: ^1.8.3 # 경로 관련 기능을 제공하는 플러그인
+  get_it: ^7.6.0
 
 ## dev_dependencies ? 앱 실제 출시에는 필요 없고, 개발할때만 필요한 패키지들
 dev_dependencies:
