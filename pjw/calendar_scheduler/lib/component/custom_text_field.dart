@@ -5,10 +5,12 @@ import 'package:flutter/services.dart';
 class CustomTextField extends StatelessWidget {
   final String label;
   final bool isTime;
+  final FormFieldSetter<String> onSaved;
 
   const CustomTextField({
     required this.label,
     required this.isTime,
+    required this.onSaved,
     Key? key
   }) : super(key: key);
 
@@ -29,12 +31,28 @@ class CustomTextField extends StatelessWidget {
 
   Widget renderTextField() {
     return TextFormField(
+      onSaved: onSaved,
       /* TextFormField = TextField + 추가 기능 */
       /* validator : null return = NO ERROR */
       validator: (String? val) {
         if (val == null || val.isEmpty) {
           return '값을 입력해주세요';
         }
+
+        if (isTime) {
+          /* 아래에 있는 inputFormatters 를 통해 int로 들어오는지 알 수 있음 */
+          int time = int.parse(val);
+
+          if (time < 0) {
+            return '0 이상의 숫자를 입력해주세요';
+          }
+          if (time > 24) {
+            return '24 이하의 숫자를 입력해주세요';
+          }
+        } else {
+          // 내용에 대한 Valid 는 지금은 굳이 필요가 없음!
+        }
+
         return null;
       },
       cursorColor: Colors.grey,
